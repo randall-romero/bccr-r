@@ -1,0 +1,197 @@
+###
+# This script downloads data from Banco Central de Costa Rica and creates a tidy data.frame.
+
+# Randall Romero-Aguilar
+# January 2016
+
+
+
+
+# ====DEFINE FUNCTIONS TO DOWNLOAD AND TIDY-UP DATA FROM CENTRAL BANK WEBSITE=================
+
+
+
+
+
+
+
+#' Download a table from the BCCR website.
+#'
+#' \code{download_series} downloads data from the BCCR website, stripping header rows
+#'
+#' @param cuadro A number identifying the BCCR's data table (integer).
+#' @param first The first year to download (integer, default=1990).
+#' @param last The last year to download (integer, default=2015).
+#' @param header Number of the line that contains the column headers (integer, default=6)
+#'
+#' @return A data frame with data in same format as in BCCR website.
+#' @export
+#' @examples
+#' download_series(125)
+#' download_series(138, 1995, 2016)
+#' download_series(367, header=5)
+download_series <- function(cuadro, first=2012, last=2015, header=1){
+  bccr_web <- "http://indicadoreseconomicos.bccr.fi.cr/indicadoreseconomicos/Cuadros/frmVerCatCuadro.aspx?"
+  api <- paste("&FecInicial=",first, "/01/01&FecFinal=", last, "/12/31&Exportar=True&Excel=True", sep='')
+  url_series <- paste(bccr_web,"CodCuadro=",cuadro,api,sep="")
+
+  datos <- rvest::html_table(xml2::read_html(url_series),fill=TRUE)[[1]]   #[-(header-1):-0,]
+
+  # clean column that have no data
+  kk <- 1
+  while (kk  <= ncol(datos)){
+    if (all(is.na(datos[kk]))){
+      datos <- datos[-kk]
+    } else {
+      kk <- kk + 1
+    }
+  }
+
+  return(datos)
+}
+
+
+
+
+
+
+
+make_monthly <- function(ini, db){
+  return(ymd(ini) + months(1:nrow(db)) - days(1))
+}
+
+
+
+
+
+
+
+#' Reads montly series.
+#'
+#' \code{read_montly_series} is used to download tables of montly data series,
+#' where each row is a year and each column a month.
+#'
+#' @inheritParams download_series
+#' @param series A list of name=cuadro pairs. Name (a string) is the name of a
+#'   series, cuadro (integer) the number of table in the BCCR website.
+#'
+#' @return A data frame with given series.
+#' @export
+#'
+#' @examples
+#' read_montly_series('M1', 125)
+read_monthly_series <- function(series, first=1990, last=2015, header=5){
+
+  FIRST_SERIES <- TRUE
+  for (ss in names(series)){
+    raw_series <- download_series(series[ss], first, last, header)[-1,]
+    colnames(raw_series) <- c("anno", 1:12)
+
+    raw_series %<>%
+      tidyr::gather("mes", "value", -1) %>%
+      dplyr::arrange(anno, mes) %>%
+      dplyr::transmute(
+        fecha= make_date(anno, mes),
+        value = subs_commas(value))
+
+    colnames(raw_series) <- c('fecha', ss)
+
+    if (FIRST_SERIES){
+      all_series <- raw_series
+      FIRST_SERIES <- FALSE
+    } else {
+      all_series %<>% dplyr::inner_join(raw_series, 'fecha')
+    }
+
+    }
+  return(series)
+}
+
+
+
+
+
+
+
+
+
+#' Reads daily series.
+#'
+#' \code{read_daily_series} is used to download tables of a daily series, where
+#' each row is a day of the year and each column a year.
+#'
+#' @inheritParams download_series
+#' @param series A list or a table. If a list is provided, its entries should be
+#'   "cuadro" numbers, labeled with the desired variable name. If a table is
+#'   provided, its first column must have the desired variable names, and its
+#'   second column the \emph{cuadro} numbers.
+#'
+#'   In all case, \emph{cuadro} is the number of a table in the BCCR website.
+#'
+#' @return A data frame with given series.
+#' @export
+#' @importFrom magrittr %>% %<>%
+#'
+#' @examples
+#' mylist <- list(tc=367, tbasica=17)
+#' dd <- read_daily_series(mylist)
+read_daily_series <- function(series, first=1950, last=lubridate::year(Sys.Date()), freq='d', func=mean){
+
+
+  if (is.data.frame(series)){
+    series <- table_to_list(series)
+  }
+
+  FIRST_SERIES <- TRUE
+  for (ss in names(series)){
+    raw_series <- download_series(series[ss], first, last)
+
+
+
+    ## set headers
+    h <- match('1 Ene', raw_series$X1) - 1  # raw that has headers (year number)
+    t0 <- lubridate::ymd(paste(as.integer(raw_series[h,2]) - 1, '12 31'))  # initial date
+    raw_series[h, 1] <- "dia"
+    colnames(raw_series) <- raw_series[h,]
+    raw_series <- raw_series[-h:-1,]
+
+
+    ## code for non-leap-years
+    for (kk in 2:ncol(raw_series)){
+      this_year <- as.integer(colnames(raw_series)[kk])
+      if (!lubridate::leap_year(this_year)){
+        raw_series[60, kk] = 'DELETE ME'      # 60 = feb29
+      }
+    }
+
+      raw_series %<>% tidyr::gather("anno", "value", -1) %>%
+        dplyr::filter(value!='DELETE ME')
+
+      raw_series %<>% dplyr::transmute(
+        fecha = t0 + lubridate::days(1:nrow(raw_series)),
+        value = subs_commas(value)) # %>% filter(day(fecha + days(1)) == 1)
+
+      colnames(raw_series) <- c('fecha', ss)
+
+
+      if (FIRST_SERIES){
+        all_series <- raw_series
+        FIRST_SERIES <- FALSE
+      } else {
+        all_series %<>% dplyr::full_join(raw_series, 'fecha')
+      }
+
+  }
+
+
+
+
+
+  ## Change frequency
+  if (tolower(freq) == 'm'){
+    all_series %<>% daily_to_monthly(func)
+  }
+
+  return(trim_dataframe(all_series))
+}
+
