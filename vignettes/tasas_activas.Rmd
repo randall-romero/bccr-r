@@ -4,7 +4,7 @@ author: "Randall Romero-Aguilar"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteIndexEntry{Reading interest rates}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -12,7 +12,7 @@ vignette: >
 This vignette shows how to download time series on lending interest rates. In the first example, the user knows the BCCR _cuadro_ numbers. In the second, he uses the provided `bancarias` data frame to get those numbers.
 
 
-```{r}
+```{r, results='hide'}
 library(bccr)
 library(ggplot2)   # to make plots
 library(magrittr)  # for pipe operators
