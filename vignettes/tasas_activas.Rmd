@@ -27,23 +27,27 @@ Here, We are going to compare the local-currency interest rates on housing morga
 ```{r}
 vars <- list(public=495, private=496)
 vivienda <- read_daily_series(vars)
-head(vivienda)
-tail(vivienda)
+print(vivienda)
 ```
 
-Now lets make a plot of monthly data from 2000 to 2015, by taking the mean of the daily observations.
-```{r, cache=TRUE,fig.width=8}
+By default, *read_daily_series* will read all available data. To limit the sample, you can specify the first and last years to read. Moreover, we can request to change the frequency from daily to monthly by setting the option *freq='m'*.
+
+
+For example, let's get monthly data from 2000 to 2015, by taking the mean of the daily observations.
+```{r, cache=TRUE}
 vivienda <- read_daily_series(vars, 2000, 2015, 'm', mean)
-head(vivienda)
-tail(vivienda)
+print(vivienda)
+```
 
 
+```{r, fig.width=8}
 vivienda %>% 
   gather('owner','rate',2:3) %>%
   ggplot(aes(x=fecha, y=rate, color=owner)) + 
   geom_line(size=2.0) + 
   labs(title='Lending interest rate for housing, by type of bank', x='',y='% rate ')
 ```
+
 
 
 ## Using `bancarias` dataframe

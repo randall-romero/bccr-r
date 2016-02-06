@@ -29,9 +29,6 @@ YMD <- function(y, m, d=0){
 }
 
 
-
-
-
 #' Fix the decimal separator
 #'
 #' In Costa Rica, the decimal separator is indicated by a comma (,) while R
@@ -50,24 +47,21 @@ subs_commas <- function(value){
 
 #' Convert daily data to monthly
 #'
-#' @param datos A data frame where dates are indicated by a lubridate vector "fechas"
+#' @param datos A data.table where dates are indicated by a lubridate vector "fecha"
 #' @param func A function to summarize the data
 #'
-#' @return A data frame with monthly data
+#' @return A data.table with monthly data
 #' @export
+#' @import data.table
 #'
 #' @examples
 #' ss <- read_daily_series(list(tbasica=17,tc=367), 2010, 2015)
 #' daily_to_monthly(ss, dplyr::last)
 #' daily_to_monthly(ss, mean)
 daily_to_monthly <- function(datos, func){
-  datos %<>%
-    dplyr::mutate(anno = lubridate::year(fecha),
-           mes = lubridate::month(fecha)) %>%
-    dplyr::group_by(anno, mes) %>%
-    dplyr::summarise_each(dplyr::funs(func)) %>%
-    dplyr::mutate(fecha=YMD(anno, mes))
-  return(datos[-2:-1])
+
+  lubridate::day(datos$fecha) <- lubridate::days_in_month(datos$fecha)
+  return(datos[, lapply(.SD, func), by=.(fecha)])
 }
 
 
@@ -84,6 +78,7 @@ daily_to_monthly <- function(datos, func){
 #' @examples
 table_to_list <- function(tab){
   ltab <- list()
+  tab <- as.data.frame(tab)
 
   for (k in 1:nrow(tab)){
     v <- as.character(tab[k,1])
@@ -99,9 +94,9 @@ table_to_list <- function(tab){
 #'
 #' Removes initial and last observations where all variables have missing values.
 #'
-#' @param df A data frame
+#' @param df A data.table
 #'
-#' @return A data frame
+#' @return A data.table
 #' @export
 #'
 #' @examples
@@ -111,13 +106,13 @@ trim_dataframe <- function(df){
 
   idx <- rep(TRUE, nr)
   k <- 1
-  while (all(is.na(df[k,2:nc]))){
+  while (all(is.na(df[k,2:nc, with=FALSE]))){
     idx[k] <- FALSE
     k <- k + 1
   }
 
   k <- nr
-  while (all(is.na(df[k,2:nc]))){
+  while (all(is.na(df[k,2:nc, with=FALSE]))){
     idx[k] <- FALSE
     k <- k - 1
   }

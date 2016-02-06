@@ -20,7 +20,7 @@ read_daily_series(series, first = 1950, last = lubridate::year(Sys.Date()),
 \item{last}{The last year to download (integer, default=2015).}
 }
 \value{
-A data frame with given series.
+A data.table with given series.
 }
 \description{
 \code{read_daily_series} is used to download tables of a daily series, where

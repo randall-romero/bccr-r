@@ -24,7 +24,7 @@
 #' @param last The last year to download (integer, default=2015).
 #' @param header Number of the line that contains the column headers (integer, default=6)
 #'
-#' @return A data frame with data in same format as in BCCR website.
+#' @return A data.table with data in same format as in BCCR website.
 #' @export
 #' @examples
 #' download_series(125)
@@ -47,7 +47,7 @@ download_series <- function(cuadro, first=2012, last=2015, header=1){
     }
   }
 
-  return(datos)
+  return(data.table::data.table(datos))
 }
 
 
@@ -128,9 +128,10 @@ read_monthly_series <- function(series, first=1990, last=2015, header=5){
 #'
 #'   In all case, \emph{cuadro} is the number of a table in the BCCR website.
 #'
-#' @return A data frame with given series.
+#' @return A data.table with given series.
 #' @export
 #' @importFrom magrittr %>% %<>%
+#' @import data.table
 #'
 #' @examples
 #' mylist <- list(tc=367, tbasica=17)
@@ -146,13 +147,11 @@ read_daily_series <- function(series, first=1950, last=lubridate::year(Sys.Date(
   for (ss in names(series)){
     raw_series <- download_series(series[ss], first, last)
 
-
-
     ## set headers
     h <- match('1 Ene', raw_series$X1) - 1  # raw that has headers (year number)
-    t0 <- lubridate::ymd(paste(as.integer(raw_series[h,2]) - 1, '12 31'))  # initial date
+    t0 <- lubridate::ymd(paste(as.integer(raw_series[h,X2]) - 1, '12 31'))  # initial date
     raw_series[h, 1] <- "dia"
-    colnames(raw_series) <- raw_series[h,]
+    colnames(raw_series) <- as.character(raw_series[h,])
     raw_series <- raw_series[-h:-1,]
 
 
@@ -164,28 +163,23 @@ read_daily_series <- function(series, first=1950, last=lubridate::year(Sys.Date(
       }
     }
 
-      raw_series %<>% tidyr::gather("anno", "value", -1) %>%
-        dplyr::filter(value!='DELETE ME')
+      raw_series %<>% data.table::melt(id="dia", measure=2:ncol(raw_series))
+      raw_series <- raw_series[value != "DELETE ME",
+                               .(fecha=t0 + lubridate::days(1:.N),
+                                 value=subs_commas(value))]
 
-      raw_series %<>% dplyr::transmute(
-        fecha = t0 + lubridate::days(1:nrow(raw_series)),
-        value = subs_commas(value)) # %>% filter(day(fecha + days(1)) == 1)
 
       colnames(raw_series) <- c('fecha', ss)
-
+      setkey(raw_series,'fecha')
 
       if (FIRST_SERIES){
         all_series <- raw_series
         FIRST_SERIES <- FALSE
       } else {
-        all_series %<>% dplyr::full_join(raw_series, 'fecha')
+        all_series %<>% merge(raw_series, all=TRUE)
       }
 
   }
-
-
-
-
 
   ## Change frequency
   if (tolower(freq) == 'm'){

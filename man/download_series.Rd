@@ -16,7 +16,7 @@ download_series(cuadro, first = 2012, last = 2015, header = 1)
 \item{header}{Number of the line that contains the column headers (integer, default=6)}
 }
 \value{
-A data frame with data in same format as in BCCR website.
+A data.table with data in same format as in BCCR website.
 }
 \description{
 \code{download_series} downloads data from the BCCR website, stripping header rows
