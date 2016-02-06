@@ -1,0 +1,23 @@
+Package: bccr
+Type: Package
+Title: Reads Data From Central Bank of Costa Rica
+Version: 0.1
+Date: 2016-01-26
+Authors@R: person("Randall", "Romero-Aguilar", email = "randall.romero@ucr.ac.cr", role = c("aut", "cre"))
+Description: Provides functions to download data from the Central Bank of Costa
+    Rica (www.bccr.fi.cr/indicadores_economicos_/) and format the results in tidy
+    format. It provides the option to convert data frequencies.
+License: MIT + file LICENSE
+LazyData: TRUE
+Imports: 
+    lubridate,
+    tidyr,
+    dplyr,
+    rvest,
+    magrittr
+Suggests: 
+    ggplot2,
+    knitr,
+    rmarkdown
+RoxygenNote: 5.0.1
+VignetteBuilder: knitr
