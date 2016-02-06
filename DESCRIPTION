@@ -9,13 +9,14 @@ Description: Provides functions to download data from the Central Bank of Costa
     format. It provides the option to convert data frequencies.
 License: MIT + file LICENSE
 LazyData: TRUE
-Imports: 
+Imports:
     lubridate,
     tidyr,
     dplyr,
     rvest,
-    magrittr
-Suggests: 
+    magrittr,
+    data.table
+Suggests:
     ggplot2,
     knitr,
     rmarkdown
