@@ -95,6 +95,16 @@ table_to_list <- function(tab){
 
 
 
+#' Trim a data frame
+#'
+#' Removes initial and last observations where all variables have missing values.
+#'
+#' @param df A data frame
+#'
+#' @return A data frame
+#' @export
+#'
+#' @examples
 trim_dataframe <- function(df){
   nr <- nrow(df)
   nc <- ncol(df)
