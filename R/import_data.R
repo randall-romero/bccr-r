@@ -22,7 +22,6 @@
 #' @param cuadro A number identifying the BCCR's data table (integer).
 #' @param first The first year to download (integer, default=1990).
 #' @param last The last year to download (integer, default=2015).
-#' @param header Number of the line that contains the column headers (integer, default=6)
 #'
 #' @return A data.table with data in same format as in BCCR website.
 #' @export
@@ -30,12 +29,12 @@
 #' download_series(125)
 #' download_series(138, 1995, 2016)
 #' download_series(367, header=5)
-download_series <- function(cuadro, first=2012, last=2015, header=1){
+download_series <- function(cuadro, first=2012, last=2015){
   bccr_web <- "http://indicadoreseconomicos.bccr.fi.cr/indicadoreseconomicos/Cuadros/frmVerCatCuadro.aspx?"
   api <- paste("&FecInicial=",first, "/01/01&FecFinal=", last, "/12/31&Exportar=True&Excel=True", sep='')
   url_series <- paste(bccr_web,"CodCuadro=",cuadro,api,sep="")
 
-  datos <- rvest::html_table(xml2::read_html(url_series),fill=TRUE)[[1]]   #[-(header-1):-0,]
+  datos <- rvest::html_table(xml2::read_html(url_series),fill=TRUE)[[1]]
 
   # clean column that have no data
   kk <- 1
@@ -80,37 +79,43 @@ make_monthly <- function(ini, db){
 #'
 #' @examples
 #' read_montly_series('M1', 125)
-read_monthly_series <- function(series, first=1990, last=2015, header=5){
+read_monthly_series <- function(series, first=1950, last=lubridate::year(Sys.Date())){
+
+  if (is.data.frame(series)){
+    series <- table_to_list(series)
+  }
 
   FIRST_SERIES <- TRUE
   for (ss in names(series)){
-    raw_series <- download_series(series[ss], first, last, header)[-1,]
-    colnames(raw_series) <- c("anno", 1:12)
 
-    raw_series %<>%
-      tidyr::gather("mes", "value", -1) %>%
-      dplyr::arrange(anno, mes) %>%
-      dplyr::transmute(
-        fecha= make_date(anno, mes),
-        value = subs_commas(value))
+    raw_series <- download_series(series[ss], first, last)
+
+    ## set headers
+    h <- match('Enero', raw_series$X1) - 1  # raw that has headers (year number)
+    t0 <- lubridate::ymd(paste(as.integer(raw_series[h,X2]), '01 01'))  # initial date
+    raw_series[h, 1] <- "mes"
+    colnames(raw_series) <- as.character(raw_series[h,])
+    raw_series <- raw_series[-h:-1,]
+    raw_series$mes <- 1:12
+
+    raw_series %<>% data.table::melt(id="mes", measure=2:ncol(raw_series))
+    raw_series <- raw_series[,.(fecha=t0 + months(1:.N) - lubridate::days(1),
+                               value=subs_commas(value))]
 
     colnames(raw_series) <- c('fecha', ss)
+    setkey(raw_series,'fecha')
 
     if (FIRST_SERIES){
       all_series <- raw_series
       FIRST_SERIES <- FALSE
     } else {
-      all_series %<>% dplyr::inner_join(raw_series, 'fecha')
+      all_series %<>% merge(raw_series, all=TRUE)
     }
 
-    }
-  return(series)
+
+  }
+  return(trim_dataframe(all_series))
 }
-
-
-
-
-
 
 
 
