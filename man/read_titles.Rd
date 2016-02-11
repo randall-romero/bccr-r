@@ -13,6 +13,9 @@ read_titles(series)
 A table
 }
 \description{
-Title
+Extracts title information (first two lines) for given table numbers
+}
+\examples{
+read_titles(c(125, 96))
 }
 

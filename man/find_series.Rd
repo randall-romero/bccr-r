@@ -15,4 +15,8 @@ A data.frame with indicators whose names match the requested value
 \description{
 Find indicators by name
 }
+\examples{
+find_series("ipc")
+find_series("agricultura")
+}
 

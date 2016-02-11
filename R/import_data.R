@@ -2,7 +2,7 @@
 # This script downloads data from Banco Central de Costa Rica and creates a tidy data.frame.
 
 # Randall Romero-Aguilar
-# January 2016
+# January-February 2016
 
 
 
@@ -27,7 +27,7 @@
 #' @export
 #' @examples
 #' download_series(125)
-#' download_series(138, 1995, 2016)
+#' download_series(138, first=1995, last=2016)
 #' download_series(367, header=5)
 download_series <- function(cuadro, first=2012, last=2015){
   bccr_web <- "http://indicadoreseconomicos.bccr.fi.cr/indicadoreseconomicos/Cuadros/frmVerCatCuadro.aspx?"
@@ -251,17 +251,9 @@ read_year_month <- function(series, first=1950, last=lubridate::year(Sys.Date())
 
 
 
-
-
-
-
-
-
-
-
-
-
 #' Title
+#'
+#' Extracts title information (first two lines) for given table numbers
 #'
 #' @param series A vector of table numbers
 #'
@@ -269,31 +261,37 @@ read_year_month <- function(series, first=1950, last=lubridate::year(Sys.Date())
 #' @export
 #'
 #' @examples
+#' read_titles(c(125, 96))
 read_titles <- function(series){
 
   series <- as.character(series)
-  raw_series <- data.table(series, 'linea1','linea2')
+  raw_series <- data.table(series, NaN,NaN)
   colnames(raw_series) <- c('series','title','subtitle')
   setkey(raw_series, 'series')
-  FIRST_SERIES <- TRUE
+
 
   bccr_web <- "http://indicadoreseconomicos.bccr.fi.cr/indicadoreseconomicos/Cuadros/frmVerCatCuadro.aspx?"
-  api <- "&FecInicial=2015/01/01&FecFinal=2015/12/31&Exportar=True&Excel=True"
-
+  api <- "&Exportar=True&Excel=True"
 
   for (ss in series){
+    url_series <- paste(bccr_web,"CodCuadro=",ss,api,sep="")
 
-    #url_series <- paste(bccr_web,"CodCuadro=",ss,api,sep="")
-    #tbl <- xml2::read_html(url_series)
-    #raw_series[ss, title:=xml2::xml_contents(xml2::xml_find_one(tbl, "head/title"))]
+    tryCatch(
+      {
+        titulos <- rvest::html_table(xml2::read_html(url_series),fill=TRUE)[[1]]$X1[1:2]
+        raw_series[ss, title:= titulos[1]]
+        raw_series[ss, subtitle:= titulos[2]]
+        print(paste(ss, titulos[1], sep = "   &   "))
+      },
+      error=function(cond){
+        print(paste(ss, "ERROR -- Could not find the title", sep = "   &   "))
+      }
 
-    titulos <- download_series(ss, 2010, 2015)$X1[1:2]
-    raw_series[ss, title:= titulos[1]]
-    raw_series[ss, subtitle:= titulos[2]]
-    print(raw_series[ss, title])
+    )
+
 
   }
-  #return(trim_dataframe(all_series))
+
   return(raw_series)
 }
 
@@ -309,6 +307,8 @@ read_titles <- function(series){
 #' @export
 #'
 #' @examples
+#' find_series("ipc")
+#' find_series("agricultura")
 find_series <- function(name){
   idx <- grep(name, bccr::indicadores$TITULO,ignore.case = TRUE)
   return(bccr::indicadores[idx,])

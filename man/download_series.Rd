@@ -21,7 +21,7 @@ A data.table with data in same format as in BCCR website.
 }
 \examples{
 download_series(125)
-download_series(138, 1995, 2016)
+download_series(138, first=1995, last=2016)
 download_series(367, header=5)
 }
 
