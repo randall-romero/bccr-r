@@ -65,10 +65,10 @@ make_monthly <- function(ini, db){
 
 
 
-#' Reads montly series.
+#' Reads monthly series.
 #'
 #' \code{read_montly_series} is used to download tables of montly data series,
-#' where each row is a year and each column a month.
+#' where each row is a month and each column a year.
 #'
 #' @inheritParams download_series
 #' @param series A list of name=cuadro pairs. Name (a string) is the name of a
@@ -78,8 +78,8 @@ make_monthly <- function(ini, db){
 #' @export
 #'
 #' @examples
-#' read_montly_series('M1', 125)
-read_monthly_series <- function(series, first=1950, last=lubridate::year(Sys.Date())){
+#' read_month_year(list(M1=125))
+read_month_year <- function(series, first=1950, last=lubridate::year(Sys.Date())){
 
   if (is.data.frame(series)){
     series <- table_to_list(series)
@@ -194,3 +194,105 @@ read_daily_series <- function(series, first=1950, last=lubridate::year(Sys.Date(
   return(trim_dataframe(all_series))
 }
 
+
+
+#' Reads monthly series.
+#'
+#' \code{read_year_month} is used to download tables of montly data series,
+#' where each row is a year and each column a month.
+#'
+#' @inheritParams read_month_year
+#'
+#' @return A data frame with given series.
+#' @export
+#' @importFrom magrittr %>% %<>%
+#' @import data.table
+#'
+#' @examples
+#' read_year_month(list(lmn=95, lme=96))
+read_year_month <- function(series, first=1950, last=lubridate::year(Sys.Date())){
+
+  if (is.data.frame(series)){
+    series <- table_to_list(series)
+  }
+
+  FIRST_SERIES <- TRUE
+  for (ss in names(series)){
+
+    raw_series <- download_series(series[ss], first, last)
+
+    ## set headers
+    h <- match('Enero', raw_series$X2)   # raw that has headers (year number)
+    t0 <- lubridate::ymd(paste(as.integer(raw_series[h+1,X1]), '01 01'))  # initial date
+    colnames(raw_series) <- c('anno', 1:12)
+    raw_series <- raw_series[-h:-1,]
+    #raw_series$mes <- 1:12
+
+    raw_series %<>% data.table::melt(id="anno", measure=2:ncol(raw_series))
+    raw_series <- raw_series[,.(fecha=YMD(anno, variable),
+                                value=subs_commas(value))]
+
+    colnames(raw_series) <- c('fecha', ss)
+    setkey(raw_series,'fecha')
+
+    if (FIRST_SERIES){
+      all_series <- raw_series
+      FIRST_SERIES <- FALSE
+    } else {
+      all_series %<>% merge(raw_series, all=TRUE)
+    }
+  }
+
+  return(trim_dataframe(all_series))
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#' Title
+#'
+#' @param series A vector of table numbers
+#'
+#' @return A table
+#' @export
+#'
+#' @examples
+read_titles <- function(series){
+
+  series <- as.character(series)
+  raw_series <- data.table(series, 'linea1','linea2')
+  colnames(raw_series) <- c('series','title','subtitle')
+  setkey(raw_series, 'series')
+  FIRST_SERIES <- TRUE
+
+  bccr_web <- "http://indicadoreseconomicos.bccr.fi.cr/indicadoreseconomicos/Cuadros/frmVerCatCuadro.aspx?"
+  api <- "&FecInicial=2015/01/01&FecFinal=2015/12/31&Exportar=True&Excel=True"
+
+
+  for (ss in series){
+
+    #url_series <- paste(bccr_web,"CodCuadro=",ss,api,sep="")
+    #tbl <- xml2::read_html(url_series)
+    #raw_series[ss, title:=xml2::xml_contents(xml2::xml_find_one(tbl, "head/title"))]
+
+    titulos <- download_series(ss, 2010, 2015)$X1[1:2]
+    raw_series[ss, title:= titulos[1]]
+    raw_series[ss, subtitle:= titulos[2]]
+    print(raw_series[ss, title])
+
+  }
+  #return(trim_dataframe(all_series))
+  return(raw_series)
+}

@@ -7,12 +7,12 @@
 daily_to_monthly(datos, func)
 }
 \arguments{
-\item{datos}{A data frame where dates are indicated by a lubridate vector "fechas"}
+\item{datos}{A data.table where dates are indicated by a lubridate vector "fecha"}
 
 \item{func}{A function to summarize the data}
 }
 \value{
-A data frame with monthly data
+A data.table with monthly data
 }
 \description{
 Convert daily data to monthly

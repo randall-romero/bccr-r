@@ -4,7 +4,7 @@
 \alias{download_series}
 \title{Download a table from the BCCR website.}
 \usage{
-download_series(cuadro, first = 2012, last = 2015, header = 1)
+download_series(cuadro, first = 2012, last = 2015)
 }
 \arguments{
 \item{cuadro}{A number identifying the BCCR's data table (integer).}
@@ -12,8 +12,6 @@ download_series(cuadro, first = 2012, last = 2015, header = 1)
 \item{first}{The first year to download (integer, default=1990).}
 
 \item{last}{The last year to download (integer, default=2015).}
-
-\item{header}{Number of the line that contains the column headers (integer, default=6)}
 }
 \value{
 A data.table with data in same format as in BCCR website.
