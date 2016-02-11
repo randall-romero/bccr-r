@@ -296,3 +296,20 @@ read_titles <- function(series){
   #return(trim_dataframe(all_series))
   return(raw_series)
 }
+
+
+
+
+
+#' Find indicators by name
+#'
+#' @param name A string text with part of the indicator name
+#'
+#' @return A data.frame with indicators whose names match the requested value
+#' @export
+#'
+#' @examples
+find_series <- function(name){
+  idx <- grep(name, bccr::indicadores$TITULO,ignore.case = TRUE)
+  return(bccr::indicadores[idx,])
+}
