@@ -45,6 +45,33 @@ subs_commas <- function(value){
 }
 
 
+
+
+#' Remove empty columns
+#'
+#' @param datos A data.frame
+#'
+#' @return Same data.frame, after removing columns with no data
+#'
+#' @examples
+#' remove_empty_columns(mydata)
+remove_empty_columns <- function(datos){
+  kk <- 1
+  while (kk  <= ncol(datos)){
+    if (all(is.na(datos[kk]))){
+      datos <- datos[-kk]
+    } else {
+      kk <- kk + 1
+    }
+  }
+  return(datos)
+}
+
+
+
+
+
+
 #' Convert daily data to monthly
 #'
 #' @param datos A data.table where dates are indicated by a lubridate vector "fecha"
@@ -76,16 +103,22 @@ daily_to_monthly <- function(datos, func){
 #' @export
 #'
 #' @examples
-table_to_list <- function(tab){
-  ltab <- list()
-  tab <- as.data.frame(tab)
+series.as.list <- function(tab){
 
-  for (k in 1:nrow(tab)){
-    v <- as.character(tab[k,1])
-    ltab[v] <- tab[k, 2]
+  if (is.data.frame(tab)){
+    ltab <- list()
+    tab <- as.data.frame(tab)
+
+    for (k in 1:nrow(tab)){
+      v <- as.character(tab[k,1])
+      ltab[v] <- tab[k, 2]
+      }
+    return(ltab)
   }
 
-  return(ltab)
+  if (is.list(tab)){
+    return(tab)
+    }
 }
 
 
@@ -121,3 +154,31 @@ trim_dataframe <- function(df){
 
 
   }
+
+
+#' Multiple replacement
+#'
+#' @param pattern A vector of strings to be replaced
+#' @param replacement A matching vector of strings with the replacements
+#' @param x Text to be modified
+#' @param ... Additional parameters to be passed to gsub
+#' @export
+#' @return The modified text
+#'
+#' @examples
+#' mgsub(wrong, right, text)
+mgsub <- function(pattern, replacement, x, ...){
+  if (length(pattern)!=length(replacement)){
+    stop("pattern and replacement do not have the same length.")
+    }
+  result <- x
+  for (i in 1:length(pattern)) {
+    result <- gsub(pattern[i], replacement[i], result, ...)
+    }
+  return(result)
+}
+
+
+
+
+

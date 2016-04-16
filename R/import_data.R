@@ -2,7 +2,7 @@
 # This script downloads data from Banco Central de Costa Rica and creates a tidy data.frame.
 
 # Randall Romero-Aguilar
-# January-February 2016
+# January-April 2016
 
 
 
@@ -12,6 +12,25 @@
 
 
 
+#' API: Make a URL to download data from BCCR
+#'
+#' \code{api} returns the URL for a BCCR table, for a given year range.
+#'
+#' @param cuadro A number identifying the BCCR's data table (integer).
+#' @param first The first year to download (integer, default=1990).
+#' @param last The last year to download (integer, default=2015).
+#'
+#' @return A valid URL to download the data
+#' @export
+#'
+#' @examples
+#' api(138, 1995, 2016)
+api <- function(cuadro, first=2012, last=2015){
+  bccr_web <- "http://indicadoreseconomicos.bccr.fi.cr/indicadoreseconomicos/Cuadros/frmVerCatCuadro.aspx?"
+  api <- paste("&FecInicial=",first, "/01/01&FecFinal=", last, "/12/31&Exportar=True&Excel=True", sep='')
+  url_series <- paste(bccr_web,"CodCuadro=",cuadro,api,sep="")
+  return(url_series)
+}
 
 
 
@@ -19,34 +38,27 @@
 #'
 #' \code{download_series} downloads data from the BCCR website, stripping header rows
 #'
-#' @param cuadro A number identifying the BCCR's data table (integer).
-#' @param first The first year to download (integer, default=1990).
-#' @param last The last year to download (integer, default=2015).
+#' @inheritParams api
 #'
 #' @return A data.table with data in same format as in BCCR website.
+#' @importFrom magrittr %>%
 #' @export
 #' @examples
 #' download_series(125)
 #' download_series(138, first=1995, last=2016)
 #' download_series(367, header=5)
 download_series <- function(cuadro, first=2012, last=2015){
-  bccr_web <- "http://indicadoreseconomicos.bccr.fi.cr/indicadoreseconomicos/Cuadros/frmVerCatCuadro.aspx?"
-  api <- paste("&FecInicial=",first, "/01/01&FecFinal=", last, "/12/31&Exportar=True&Excel=True", sep='')
-  url_series <- paste(bccr_web,"CodCuadro=",cuadro,api,sep="")
+  #url_series <- api(cuadro, first, last)
+  #datos <- rvest::html_table(xml2::read_html(url_series),fill=TRUE)[[1]]
 
-  datos <- rvest::html_table(xml2::read_html(url_series),fill=TRUE)[[1]]
-
-  # clean column that have no data
-  kk <- 1
-  while (kk  <= ncol(datos)){
-    if (all(is.na(datos[kk]))){
-      datos <- datos[-kk]
-    } else {
-      kk <- kk + 1
-    }
-  }
-
-  return(data.table::data.table(datos))
+  datos <-
+    api(cuadro, first, last) %>%
+    xml2::read_html() %>%
+    rvest::html_table(fill=TRUE) %>%
+    `[[`(1) %>%
+    remove_empty_columns() %>%
+    data.table::data.table()
+  return(datos)
 }
 
 
@@ -70,7 +82,7 @@ make_monthly <- function(ini, db){
 #' \code{read_montly_series} is used to download tables of montly data series,
 #' where each row is a month and each column a year.
 #'
-#' @inheritParams download_series
+#' @inheritParams api
 #' @param series A list of name=cuadro pairs. Name (a string) is the name of a
 #'   series, cuadro (integer) the number of table in the BCCR website.
 #'
@@ -81,9 +93,8 @@ make_monthly <- function(ini, db){
 #' read_month_year(list(M1=125))
 read_month_year <- function(series, first=1950, last=lubridate::year(Sys.Date())){
 
-  if (is.data.frame(series)){
-    series <- table_to_list(series)
-  }
+  series <- series.as.list(series)
+
 
   FIRST_SERIES <- TRUE
   for (ss in names(series)){
@@ -125,7 +136,7 @@ read_month_year <- function(series, first=1950, last=lubridate::year(Sys.Date())
 #' \code{read_daily_series} is used to download tables of a daily series, where
 #' each row is a day of the year and each column a year.
 #'
-#' @inheritParams download_series
+#' @inheritParams api
 #' @param series A list or a table. If a list is provided, its entries should be
 #'   "cuadro" numbers, labeled with the desired variable name. If a table is
 #'   provided, its first column must have the desired variable names, and its
@@ -143,10 +154,8 @@ read_month_year <- function(series, first=1950, last=lubridate::year(Sys.Date())
 #' dd <- read_daily_series(mylist)
 read_daily_series <- function(series, first=1950, last=lubridate::year(Sys.Date()), freq='d', func=mean){
 
+  series <- series.as.list(series)
 
-  if (is.data.frame(series)){
-    series <- table_to_list(series)
-  }
 
   FIRST_SERIES <- TRUE
   for (ss in names(series)){
@@ -211,10 +220,8 @@ read_daily_series <- function(series, first=1950, last=lubridate::year(Sys.Date(
 #' @examples
 #' read_year_month(list(lmn=95, lme=96))
 read_year_month <- function(series, first=1950, last=lubridate::year(Sys.Date())){
+  series <- series.as.list(series)
 
-  if (is.data.frame(series)){
-    series <- table_to_list(series)
-  }
 
   FIRST_SERIES <- TRUE
   for (ss in names(series)){
@@ -288,8 +295,6 @@ read_titles <- function(series){
       }
 
     )
-
-
   }
 
   return(raw_series)
@@ -313,3 +318,9 @@ find_series <- function(name){
   idx <- grep(name, bccr::indicadores$TITULO,ignore.case = TRUE)
   return(bccr::indicadores[idx,])
 }
+
+
+read_indicator_quarter <- function(series, first=1950, last=lubridate::year(Sys.Date())){
+
+}
+
