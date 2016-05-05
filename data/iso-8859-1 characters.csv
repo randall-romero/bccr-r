@@ -1,0 +1,66 @@
+Character,EntityNumber,EntityName,Description,Wrong
+,&#160;,&nbsp;,non-breaking space,¬†
+¿,&#192;,&Agrave;,"capital a, grave accent",√Ä
+¡,&#193;,&Aacute;,"capital a, acute accent",√Å
+¬,&#194;,&Acirc;,"capital a, circumflex accent",√Ç
+√,&#195;,&Atilde;,"capital a, tilde",√É
+ƒ,&#196;,&Auml;,"capital a, umlaut mark",√Ñ
+≈,&#197;,&Aring;,"capital a, ring",√Ö
+∆,&#198;,&AElig;,capital ae,√Ü
+«,&#199;,&Ccedil;,"capital c, cedilla",√á
+»,&#200;,&Egrave;,"capital e, grave accent",√à
+…,&#201;,&Eacute;,"capital e, acute accent",√â
+ ,&#202;,&Ecirc;,"capital e, circumflex accent",√ä
+À,&#203;,&Euml;,"capital e, umlaut mark",√ã
+Ã,&#204;,&Igrave;,"capital i, grave accent",√å
+Õ,&#205;,&Iacute;,"capital i, acute accent",√ç
+Œ,&#206;,&Icirc;,"capital i, circumflex accent",√é
+œ,&#207;,&Iuml;,"capital i, umlaut mark",√è
+–,&#208;,&ETH;,"capital eth, Icelandic",√ê
+—,&#209;,&Ntilde;,"capital n, tilde",√ë
+“,&#210;,&Ograve;,"capital o, grave accent",√í
+”,&#211;,&Oacute;,"capital o, acute accent",√ì
+‘,&#212;,&Ocirc;,"capital o, circumflex accent",√î
+’,&#213;,&Otilde;,"capital o, tilde",√ï
+÷,&#214;,&Ouml;,"capital o, umlaut mark",√ñ
+◊,&#215;,&times;,multiplication,√ó
+ÿ,&#216;,&Oslash;,"capital o, slash",√ò
+Ÿ,&#217;,&Ugrave;,"capital u, grave accent",√ô
+⁄,&#218;,&Uacute;,"capital u, acute accent",√ö
+€,&#219;,&Ucirc;,"capital u, circumflex accent",√õ
+‹,&#220;,&Uuml;,"capital u, umlaut mark",√ú
+›,&#221;,&Yacute;,"capital y, acute accent",√ù
+ﬁ,&#222;,&THORN;,"capital THORN, Icelandic",√û
+ﬂ,&#223;,&szlig;,"small sharp s, German",√ü
+‡,&#224;,&agrave;,"small a, grave accent",√†
+·,&#225;,&aacute;,"small a, acute accent",√°
+‚,&#226;,&acirc;,"small a, circumflex accent",√¢
+„,&#227;,&atilde;,"small a, tilde",√£
+‰,&#228;,&auml;,"small a, umlaut mark",√§
+Â,&#229;,&aring;,"small a, ring",√•
+Ê,&#230;,&aelig;,small ae,√¶
+Á,&#231;,&ccedil;,"small c, cedilla",√ß
+Ë,&#232;,&egrave;,"small e, grave accent",√®
+È,&#233;,&eacute;,"small e, acute accent",√©
+Í,&#234;,&ecirc;,"small e, circumflex accent",√™
+Î,&#235;,&euml;,"small e, umlaut mark",√´
+Ï,&#236;,&igrave;,"small i, grave accent",√¨
+Ì,&#237;,&iacute;,"small i, acute accent",√≠
+Ó,&#238;,&icirc;,"small i, circumflex accent",√Æ
+Ô,&#239;,&iuml;,"small i, umlaut mark",√Ø
+,&#240;,&eth;,"small eth, Icelandic",√∞
+Ò,&#241;,&ntilde;,"small n, tilde",√±
+Ú,&#242;,&ograve;,"small o, grave accent",√≤
+Û,&#243;,&oacute;,"small o, acute accent",√≥
+Ù,&#244;,&ocirc;,"small o, circumflex accent",√¥
+ı,&#245;,&otilde;,"small o, tilde",√µ
+ˆ,&#246;,&ouml;,"small o, umlaut mark",√∂
+˜,&#247;,&divide;,division,√∑
+¯,&#248;,&oslash;,"small o, slash",√∏
+˘,&#249;,&ugrave;,"small u, grave accent",√π
+˙,&#250;,&uacute;,"small u, acute accent",√∫
+˚,&#251;,&ucirc;,"small u, circumflex accent",√ª
+¸,&#252;,&uuml;,"small u, umlaut mark",√º
+˝,&#253;,&yacute;,"small y, acute accent",√Ω
+˛,&#254;,&thorn;,"small thorn, Icelandic",√æ
+ˇ,&#255;,&yuml;,"small y, umlaut mark",√ø
