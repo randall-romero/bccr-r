@@ -91,7 +91,7 @@ make_monthly <- function(ini, db){
 #'
 #' @examples
 #' read_month_year(list(M1=125))
-read_month_year <- function(series, first=1950, last=lubridate::year(Sys.Date())){
+read_month_year <- function(series, first=1950, last=lubridate::year(Sys.Date()), long=FALSE){
 
   series <- series.as.list(series)
 
@@ -125,7 +125,7 @@ read_month_year <- function(series, first=1950, last=lubridate::year(Sys.Date())
 
 
   }
-  return(trim_dataframe(all_series))
+  return(trim_dataframe(all_series, long))
 }
 
 
@@ -152,7 +152,7 @@ read_month_year <- function(series, first=1950, last=lubridate::year(Sys.Date())
 #' @examples
 #' mylist <- list(tc=367, tbasica=17)
 #' dd <- read_daily_series(mylist)
-read_daily_series <- function(series, first=1950, last=lubridate::year(Sys.Date()), freq='d', func=mean){
+read_daily_series <- function(series, first=1950, last=lubridate::year(Sys.Date()), freq='d', func=mean, long=FALSE){
 
   series <- series.as.list(series)
 
@@ -200,7 +200,7 @@ read_daily_series <- function(series, first=1950, last=lubridate::year(Sys.Date(
     all_series %<>% daily_to_monthly(func)
   }
 
-  return(trim_dataframe(all_series))
+  return(trim_dataframe(all_series, long))
 }
 
 
@@ -219,7 +219,7 @@ read_daily_series <- function(series, first=1950, last=lubridate::year(Sys.Date(
 #'
 #' @examples
 #' read_year_month(list(lmn=95, lme=96))
-read_year_month <- function(series, first=1950, last=lubridate::year(Sys.Date())){
+read_year_month <- function(series, first=1950, last=lubridate::year(Sys.Date()), long=FALSE){
   series <- series.as.list(series)
 
 
@@ -250,7 +250,7 @@ read_year_month <- function(series, first=1950, last=lubridate::year(Sys.Date())
     }
   }
 
-  return(trim_dataframe(all_series))
+  return(trim_dataframe(all_series, long))
 }
 
 
@@ -330,7 +330,7 @@ find_series <- function(name){
 #' @export
 #'
 #' @examples
-read_indicator_quarter <- function(cuadro, first=1950, last=lubridate::year(Sys.Date())){
+read_indicator_quarter <- function(cuadro, first=1950, last=lubridate::year(Sys.Date()), long=FALSE){
   raw_data <- download_series(cuadro, first, last)
   h <- grep('[Tt]rime', raw_data[[2]])
   raw_data <- data.table::data.table(t(raw_data[-(h-1):-1]))
@@ -344,9 +344,11 @@ read_indicator_quarter <- function(cuadro, first=1950, last=lubridate::year(Sys.
   for (k in 2:ncol(raw_data)){
     raw_data[[k]] <- subs_commas(raw_data[[k]])
   }
-  raw_data <- trim_dataframe(raw_data)
-  return(raw_data)
+  return(trim_dataframe(raw_data, long))
 }
+
+
+
 
 #' Title
 #'
@@ -358,7 +360,7 @@ read_indicator_quarter <- function(cuadro, first=1950, last=lubridate::year(Sys.
 #' @export
 #'
 #' @examples
-read_indicator_year <- function(cuadro, first=1950, last=lubridate::year(Sys.Date())){
+read_indicator_year <- function(cuadro, first=1950, last=lubridate::year(Sys.Date()), long=FALSE){
   raw_data <- download_series(cuadro, first, last)
   h <- min(grep('^[12]', raw_data[[2]]))
   raw_data <- data.table::data.table(t(raw_data[-(h-1):-1]))
@@ -373,8 +375,7 @@ read_indicator_year <- function(cuadro, first=1950, last=lubridate::year(Sys.Dat
     raw_data[[k]] <- subs_commas(raw_data[[k]])
   }
 
-  raw_data <- trim_dataframe(raw_data)
-  return(raw_data)
+  return(trim_dataframe(raw_data, long))
 }
 
 

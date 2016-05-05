@@ -128,12 +128,13 @@ series.as.list <- function(tab){
 #' Removes initial and last observations where all variables have missing values.
 #'
 #' @param df A data.table
+#' @param long
 #'
 #' @return A data.table
 #' @export
 #'
 #' @examples
-trim_dataframe <- function(df){
+trim_dataframe <- function(df, long=FALSE){
   nr <- nrow(df)
   nc <- ncol(df)
 
@@ -150,9 +151,14 @@ trim_dataframe <- function(df){
     k <- k - 1
   }
 
-  return(df[idx,])
+  df <- df[idx,]
+
+  if (long){
+    df <- gather.data(df)
+  }
 
 
+  return(df)
   }
 
 
@@ -198,5 +204,21 @@ parse_quarter <- function(v){
   fechas <- mgsub(trimestres, quarters, v)
   return(lubridate::dmy(fechas))
 }
+
+
+#' gather.data
+#' Transforms a wide data.table to a long data.table
+#'
+#' @param datos A (wide) data.frame
+#'
+#' @return A long data.frame
+#' @export
+#'
+#' @examples
+gather.data <- function(datos){
+  n = ncol(datos)
+  return(tidyr::gather(datos,"indicador", "valor", 2:n))
+}
+
 
 
