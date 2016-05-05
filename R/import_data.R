@@ -320,7 +320,72 @@ find_series <- function(name){
 }
 
 
-read_indicator_quarter <- function(series, first=1950, last=lubridate::year(Sys.Date())){
+#' Title
+#'
+#' @param cuadro
+#' @param first
+#' @param last
+#'
+#' @return
+#' @export
+#'
+#' @examples
+read_indicator_quarter <- function(cuadro, first=1950, last=lubridate::year(Sys.Date())){
+  raw_data <- download_series(cuadro, first, last)
+  h <- grep('[Tt]rime', raw_data[[2]])
+  raw_data <- data.table::data.table(t(raw_data[-(h-1):-1]))
+  raw_data[1,1] <- 'fecha'
+  colnames(raw_data) <- fix.spanish.chars(raw_data[1])
+  raw_data <- raw_data[-1,]
+  raw_data <- remove_empty_columns(raw_data)
 
+
+  raw_data[[1]] <- parse_quarter(raw_data[[1]])
+  for (k in 2:ncol(raw_data)){
+    raw_data[[k]] <- subs_commas(raw_data[[k]])
+  }
+  raw_data <- trim_dataframe(raw_data)
+  return(raw_data)
 }
+
+#' Title
+#'
+#' @param cuadro
+#' @param first
+#' @param last
+#'
+#' @return
+#' @export
+#'
+#' @examples
+read_indicator_year <- function(cuadro, first=1950, last=lubridate::year(Sys.Date())){
+  raw_data <- download_series(cuadro, first, last)
+  h <- min(grep('^[12]', raw_data[[2]]))
+  raw_data <- data.table::data.table(t(raw_data[-(h-1):-1]))
+  raw_data[1,1] <- 'fecha'
+  colnames(raw_data) <- fix.spanish.chars(raw_data[1])
+  raw_data <- raw_data[-1,]
+  raw_data <- remove_empty_columns(raw_data)
+
+
+  raw_data[[1]] <- YMD(raw_data[[1]],12,31)
+  for (k in 2:ncol(raw_data)){
+    raw_data[[k]] <- subs_commas(raw_data[[k]])
+  }
+
+  raw_data <- trim_dataframe(raw_data)
+  return(raw_data)
+}
+
+
+
+
+
+
+# TODO:
+# *  Some tables (e.g. read_indicator_year(2992)) are actually several tables in one, so indicators names are repeated
+#    Need to make unique indicator names!!!
+# *  Table 2992 is displaying data for 2016, although it is now shown in the website!!
+
+
 
