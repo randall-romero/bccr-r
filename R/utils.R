@@ -58,8 +58,8 @@ subs_commas <- function(value){
 remove_empty_columns <- function(datos){
   kk <- 1
   while (kk  <= ncol(datos)){
-    if (all(is.na(datos[kk]))){
-      datos <- datos[-kk]
+    if (all(is.na(datos[[kk]]))){
+      datos[[kk]] <- NULL
     } else {
       kk <- kk + 1
     }
@@ -179,6 +179,24 @@ mgsub <- function(pattern, replacement, x, ...){
 }
 
 
+#' Fix wrong Spanish characters
+#'
+#' @param txt (Vector of) strings with wrong characters
+#'
+#' @return txt (vector of) strings with proper Spanish characters
+#' @export
+#'
+#' @examples
+fix.spanish.chars <- function(txt){
+  result <- mgsub(iso.8859.1$Wrong, iso.8859.1$Character, txt)
+  return(result)
+  }
 
+parse_quarter <- function(v){
+  trimestres <- c('[Tt]rimestre 1', '[Tt]rimestre 2', '[Tt]rimestre 3', '[Tt]rimestre 4')
+  quarters <- c('31/3', '30/6', '30/9', '31/12')
+  fechas <- mgsub(trimestres, quarters, v)
+  return(lubridate::dmy(fechas))
+}
 
 
