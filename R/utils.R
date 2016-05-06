@@ -105,6 +105,7 @@ daily_to_monthly <- function(datos, func){
 #' @examples
 series.as.list <- function(tab){
 
+  # tab is given as as data.frame: use column 1 for names and column 2 for table numbers
   if (is.data.frame(tab)){
     ltab <- list()
     tab <- as.data.frame(tab)
@@ -116,9 +117,34 @@ series.as.list <- function(tab){
     return(ltab)
   }
 
+  # tab is given as a list: make sure all entries have names
   if (is.list(tab)){
+
+    # add names
+
     return(tab)
+  }
+
+  # tab is given as vector: make sure all entries have names
+  if (is.vector(tab)){
+    makeNameFromNumber <- function (x){paste("V", x, sep="")}
+
+    if (is.null(names(tab))){
+      v <- sapply(tab, makeNameFromNumber)
+    } else {
+      v <- names(tab)
     }
+
+    ltab <- list()
+
+    for (k in 1:length(tab)){
+      vi <- ifelse(v[k]=="", makeNameFromNumber(tab[k]), v[k])
+      ltab[vi] <- tab[k]
+    }
+
+    return(ltab)
+  }
+
 }
 
 

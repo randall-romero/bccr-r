@@ -222,7 +222,6 @@ read_daily_series <- function(series, first=1950, last=lubridate::year(Sys.Date(
 read_year_month <- function(series, first=1950, last=lubridate::year(Sys.Date()), long=FALSE){
   series <- series.as.list(series)
 
-
   FIRST_SERIES <- TRUE
   for (ss in names(series)){
 
