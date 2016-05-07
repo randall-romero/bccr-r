@@ -1,7 +1,7 @@
 
 
 
-
+#========================================================================================
 #' Makes a lubridate date
 #'
 #' \code{YMD} returns the last date of the month, for given year and month.
@@ -29,6 +29,7 @@ YMD <- function(y, m, d=0){
 }
 
 
+#========================================================================================
 #' Fix the decimal separator
 #'
 #' In Costa Rica, the decimal separator is indicated by a comma (,) while R
@@ -46,7 +47,7 @@ subs_commas <- function(value){
 
 
 
-
+#========================================================================================
 #' Remove empty columns
 #'
 #' @param datos A data.frame
@@ -71,7 +72,7 @@ remove_empty_columns <- function(datos){
 
 
 
-
+#========================================================================================
 #' Convert daily data to monthly
 #'
 #' @param datos A data.table where dates are indicated by a lubridate vector "fecha"
@@ -92,6 +93,8 @@ daily_to_monthly <- function(datos, func){
 }
 
 
+
+#========================================================================================
 #' Table to list
 #'
 #' Converts a table to a (dictionary) list. Labels are taken from first column and values from second column.
@@ -117,17 +120,9 @@ series.as.list <- function(tab){
     return(ltab)
   }
 
-  # tab is given as a list: make sure all entries have names
-  if (is.list(tab)){
 
-    # add names
-
-    return(tab)
-  }
-
-  # tab is given as vector: make sure all entries have names
-  if (is.vector(tab)){
-    makeNameFromNumber <- function (x){paste("V", x, sep="")}
+  # tab is given as vector OR list: make sure all entries have names
+  if (is.vector(tab) |  is.list(tab)){
 
     if (is.null(names(tab))){
       v <- sapply(tab, makeNameFromNumber)
@@ -148,7 +143,7 @@ series.as.list <- function(tab){
 }
 
 
-
+#========================================================================================
 #' Trim a data frame
 #'
 #' Removes initial and last observations where all variables have missing values.
@@ -188,6 +183,8 @@ trim_dataframe <- function(df, long=FALSE){
   }
 
 
+
+#========================================================================================
 #' Multiple replacement
 #'
 #' @param pattern A vector of strings to be replaced
@@ -211,6 +208,8 @@ mgsub <- function(pattern, replacement, x, ...){
 }
 
 
+
+#========================================================================================
 #' Fix wrong Spanish characters
 #'
 #' @param txt (Vector of) strings with wrong characters
@@ -224,6 +223,9 @@ fix.spanish.chars <- function(txt){
   return(result)
   }
 
+
+
+#========================================================================================
 parse_quarter <- function(v){
   trimestres <- c('[Tt]rimestre 1', '[Tt]rimestre 2', '[Tt]rimestre 3', '[Tt]rimestre 4')
   quarters <- c('31/3', '30/6', '30/9', '31/12')
@@ -232,6 +234,7 @@ parse_quarter <- function(v){
 }
 
 
+#========================================================================================
 #' gather.data
 #' Transforms a wide data.table to a long data.table
 #'
@@ -247,4 +250,79 @@ gather.data <- function(datos){
 }
 
 
+#========================================================================================
+#' Returns the title given by BCCR to a specified table
+#'
+#' @param x Scalar, series (table) number
+#'
+#' @return
+#' @export
+#'
+#' @examples
+makeNameFromNumber <- function (x){
+  idx <- min(which(indicadores$CUADRO==x))
+  vname <- indicadores$TITULO[idx]
+  return(vname)
+  }
 
+
+
+#========================================================================================
+#' Last day of current period
+#'
+#' @param tt A vector of lubridate dates
+#' @param period String, size of period: "week", "month", "quarter", "year"
+#'
+#' @return A vector of lubridate dates, with dates corresponding to end of specified period
+#'
+#' @examples
+lastday <- function(tt, period="year"){
+  if (period %in% c("day", "week", "month", "quarter", "year")){
+    tt <- tt + lubridate::hours(1)
+    return(lubridate::ceiling_date(tt, period) - lubridate::days(1))
+  } else {
+    stop('period must be "day", "week", "month",  "year", or "quarter". ')
+  }
+}
+
+
+
+#========================================================================================
+lower_frequency <- function(datos, func, period="year"){
+
+  datos$fecha <- lastday(datos$fecha, period)
+  return(datos[, lapply(.SD, func), by=.(fecha)])
+}
+
+
+#========================================================================================
+merge_datatables <- function(tables){
+  s <- names(tables)
+  n <- length(tables)
+
+  all_series <- tables[[s[1]]]
+  if (n>1){
+    for (k in 2:n){
+      all_series %<>% merge(tables[[s[k]]], all=TRUE)
+    }
+  }
+
+  return(all_series)
+}
+
+#========================================================================================
+tidy <- function(listOfTables, freq=NULL, func=mean, long=FALSE){
+  cleanTable <- listOfTables %>%
+    merge_datatables() %>%
+    trim_dataframe()
+
+  if (!is.null(freq)){
+    cleanTable %<>% lower_frequency(func, freq)
+  }
+
+  if (long){
+    cleanTable %<>% gather.data()
+  }
+
+  return(cleanTable)
+}

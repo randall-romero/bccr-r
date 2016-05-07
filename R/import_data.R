@@ -11,7 +11,7 @@
 
 
 
-
+#========================================================================================
 #' API: Make a URL to download data from BCCR
 #'
 #' \code{api} returns the URL for a BCCR table, for a given year range.
@@ -33,7 +33,7 @@ api <- function(cuadro, first=2012, last=2015){
 }
 
 
-
+#========================================================================================
 #' Download a table from the BCCR website.
 #'
 #' \code{download_series} downloads data from the BCCR website, stripping header rows
@@ -66,7 +66,7 @@ download_series <- function(cuadro, first=2012, last=2015){
 
 
 
-
+#========================================================================================
 make_monthly <- function(ini, db){
   return(ymd(ini) + months(1:nrow(db)) - days(1))
 }
@@ -76,7 +76,7 @@ make_monthly <- function(ini, db){
 
 
 
-
+#========================================================================================
 #' Reads monthly series.
 #'
 #' \code{read_montly_series} is used to download tables of montly data series,
@@ -91,12 +91,12 @@ make_monthly <- function(ini, db){
 #'
 #' @examples
 #' read_month_year(list(M1=125))
-read_month_year <- function(series, first=1950, last=lubridate::year(Sys.Date()), long=FALSE){
+read_month_year <- function(series, first=1950, last=lubridate::year(Sys.Date()), ...){
 
   series <- series.as.list(series)
 
 
-  FIRST_SERIES <- TRUE
+  RAWSERIES <- list()
   for (ss in names(series)){
 
     raw_series <- download_series(series[ss], first, last)
@@ -116,21 +116,15 @@ read_month_year <- function(series, first=1950, last=lubridate::year(Sys.Date())
     colnames(raw_series) <- c('fecha', ss)
     setkey(raw_series,'fecha')
 
-    if (FIRST_SERIES){
-      all_series <- raw_series
-      FIRST_SERIES <- FALSE
-    } else {
-      all_series %<>% merge(raw_series, all=TRUE)
-    }
-
-
+    RAWSERIES[[ss]]  <- raw_series
   }
-  return(trim_dataframe(all_series, long))
+
+  return(tidy(RAWSERIES, ...))
 }
 
 
 
-
+#========================================================================================
 #' Reads daily series.
 #'
 #' \code{read_daily_series} is used to download tables of a daily series, where
@@ -152,12 +146,12 @@ read_month_year <- function(series, first=1950, last=lubridate::year(Sys.Date())
 #' @examples
 #' mylist <- list(tc=367, tbasica=17)
 #' dd <- read_daily_series(mylist)
-read_daily_series <- function(series, first=1950, last=lubridate::year(Sys.Date()), freq='d', func=mean, long=FALSE){
+read_daily_series <- function(series, first=1950, last=lubridate::year(Sys.Date()), ...){
 
   series <- series.as.list(series)
 
 
-  FIRST_SERIES <- TRUE
+  RAWSERIES <- list()
   for (ss in names(series)){
     raw_series <- download_series(series[ss], first, last)
 
@@ -186,25 +180,15 @@ read_daily_series <- function(series, first=1950, last=lubridate::year(Sys.Date(
       colnames(raw_series) <- c('fecha', ss)
       setkey(raw_series,'fecha')
 
-      if (FIRST_SERIES){
-        all_series <- raw_series
-        FIRST_SERIES <- FALSE
-      } else {
-        all_series %<>% merge(raw_series, all=TRUE)
-      }
-
+      RAWSERIES[[ss]]  <- raw_series
   }
 
-  ## Change frequency
-  if (tolower(freq) == 'm'){
-    all_series %<>% daily_to_monthly(func)
-  }
 
-  return(trim_dataframe(all_series, long))
+  return(tidy(RAWSERIES, ...))
 }
 
 
-
+#========================================================================================
 #' Reads monthly series.
 #'
 #' \code{read_year_month} is used to download tables of montly data series,
@@ -219,10 +203,10 @@ read_daily_series <- function(series, first=1950, last=lubridate::year(Sys.Date(
 #'
 #' @examples
 #' read_year_month(list(lmn=95, lme=96))
-read_year_month <- function(series, first=1950, last=lubridate::year(Sys.Date()), long=FALSE){
+read_year_month <- function(series, first=1950, last=lubridate::year(Sys.Date()), ...){
   series <- series.as.list(series)
 
-  FIRST_SERIES <- TRUE
+  RAWSERIES <- list()
   for (ss in names(series)){
 
     raw_series <- download_series(series[ss], first, last)
@@ -241,22 +225,17 @@ read_year_month <- function(series, first=1950, last=lubridate::year(Sys.Date())
     colnames(raw_series) <- c('fecha', ss)
     setkey(raw_series,'fecha')
 
-    if (FIRST_SERIES){
-      all_series <- raw_series
-      FIRST_SERIES <- FALSE
-    } else {
-      all_series %<>% merge(raw_series, all=TRUE)
-    }
+    RAWSERIES[[ss]]  <- raw_series
   }
 
-  return(trim_dataframe(all_series, long))
+  return(tidy(RAWSERIES, ...))
 }
 
 
 
 
 
-
+#========================================================================================
 #' Title
 #'
 #' Extracts title information (first two lines) for given table numbers
@@ -302,7 +281,7 @@ read_titles <- function(series){
 
 
 
-
+#========================================================================================
 #' Find indicators by name
 #'
 #' @param name A string text with part of the indicator name
@@ -319,6 +298,8 @@ find_series <- function(name){
 }
 
 
+
+#========================================================================================
 #' Title
 #'
 #' @param cuadro
@@ -329,26 +310,26 @@ find_series <- function(name){
 #' @export
 #'
 #' @examples
-read_indicator_quarter <- function(cuadro, first=1950, last=lubridate::year(Sys.Date()), long=FALSE){
-  raw_data <- download_series(cuadro, first, last)
-  h <- grep('[Tt]rime', raw_data[[2]])
-  raw_data <- data.table::data.table(t(raw_data[-(h-1):-1]))
-  raw_data[1,1] <- 'fecha'
-  colnames(raw_data) <- fix.spanish.chars(raw_data[1])
-  raw_data <- raw_data[-1,]
-  raw_data <- remove_empty_columns(raw_data)
+read_indicator_quarter <- function(cuadro, first=1950, last=lubridate::year(Sys.Date()), ...){
+  RAWSERIES <- download_series(cuadro, first, last)
+  h <- grep('[Tt]rime', RAWSERIES[[2]])
+  RAWSERIES <- data.table::data.table(t(RAWSERIES[-(h-1):-1]))
+  RAWSERIES[1,1] <- 'fecha'
+  colnames(RAWSERIES) <- fix.spanish.chars(RAWSERIES[1])
+  RAWSERIES <- RAWSERIES[-1,]
+  RAWSERIES <- remove_empty_columns(RAWSERIES)
 
 
-  raw_data[[1]] <- parse_quarter(raw_data[[1]])
-  for (k in 2:ncol(raw_data)){
-    raw_data[[k]] <- subs_commas(raw_data[[k]])
+  RAWSERIES[[1]] <- parse_quarter(RAWSERIES[[1]])
+  for (k in 2:ncol(RAWSERIES)){
+    RAWSERIES[[k]] <- subs_commas(RAWSERIES[[k]])
   }
-  return(trim_dataframe(raw_data, long))
+  return(tidy(RAWSERIES, ...))
 }
 
 
 
-
+#========================================================================================
 #' Title
 #'
 #' @param cuadro
@@ -360,21 +341,21 @@ read_indicator_quarter <- function(cuadro, first=1950, last=lubridate::year(Sys.
 #'
 #' @examples
 read_indicator_year <- function(cuadro, first=1950, last=lubridate::year(Sys.Date()), long=FALSE){
-  raw_data <- download_series(cuadro, first, last)
-  h <- min(grep('^[12]', raw_data[[2]]))
-  raw_data <- data.table::data.table(t(raw_data[-(h-1):-1]))
-  raw_data[1,1] <- 'fecha'
-  colnames(raw_data) <- fix.spanish.chars(raw_data[1])
-  raw_data <- raw_data[-1,]
-  raw_data <- remove_empty_columns(raw_data)
+  RAWSERIES <- download_series(cuadro, first, last)
+  h <- min(grep('^[12]', RAWSERIES[[2]]))
+  RAWSERIES <- data.table::data.table(t(RAWSERIES[-(h-1):-1]))
+  RAWSERIES[1,1] <- 'fecha'
+  colnames(RAWSERIES) <- fix.spanish.chars(RAWSERIES[1])
+  RAWSERIES <- RAWSERIES[-1,]
+  RAWSERIES <- remove_empty_columns(RAWSERIES)
 
 
-  raw_data[[1]] <- YMD(raw_data[[1]],12,31)
-  for (k in 2:ncol(raw_data)){
-    raw_data[[k]] <- subs_commas(raw_data[[k]])
+  RAWSERIES[[1]] <- YMD(RAWSERIES[[1]],12,31)
+  for (k in 2:ncol(RAWSERIES)){
+    RAWSERIES[[k]] <- subs_commas(RAWSERIES[[k]])
   }
 
-  return(trim_dataframe(raw_data, long))
+  return(tidy(RAWSERIES, long=long))
 }
 
 
